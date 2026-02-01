@@ -1,17 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, Send } from 'lucide-react';
-import { Button, Input, Avatar, AvatarImage, AvatarFallback } from '../ui/index';
+import { MessageSquare, Send, Link as LinkIcon, CheckCircle2 } from 'lucide-react';
+import { Button, Input, Avatar, AvatarImage, AvatarFallback, Card, CardContent } from '../ui/index';
 import { cn } from '../../lib/utils';
-import { Message, Coworker } from '../../types/index';
+import { Message, Coworker, AssessmentState } from '../../types/index';
 
 interface ChatInterfaceProps {
   coworker: Coworker;
   messages: Message[];
   onSendMessage: (text: string) => void;
   isTyping?: boolean;
+  assessmentState?: AssessmentState;
+  onPRSubmit?: (url: string) => void;
 }
 
-export function ChatInterface({ coworker, messages, onSendMessage, isTyping }: ChatInterfaceProps) {
+export function ChatInterface({ coworker, messages, onSendMessage, isTyping, assessmentState, onPRSubmit }: ChatInterfaceProps) {
   const [inputValue, setInputValue] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -24,6 +26,12 @@ export function ChatInterface({ coworker, messages, onSendMessage, isTyping }: C
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
+    
+    // Check if message looks like a PR URL
+    if (inputValue.includes('github.com') && inputValue.includes('/pull/') && onPRSubmit) {
+      onPRSubmit(inputValue);
+    }
+    
     onSendMessage(inputValue);
     setInputValue("");
   };
@@ -42,6 +50,9 @@ export function ChatInterface({ coworker, messages, onSendMessage, isTyping }: C
       return <span key={i} className="whitespace-pre-wrap">{part}</span>;
     });
   };
+
+  const isManager = coworker.role.toLowerCase().includes('manager');
+  const showPRHint = isManager && assessmentState?.status === 'WORKING' && !assessmentState.prUrl && messages.length > 2;
 
   return (
     <div className="flex flex-col h-full bg-slate-50">
@@ -109,6 +120,18 @@ export function ChatInterface({ coworker, messages, onSendMessage, isTyping }: C
                <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></span>
              </div>
           </div>
+        )}
+
+        {showPRHint && (
+           <div className="mx-auto max-w-sm my-4 animate-fade-in">
+             <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 flex items-start gap-3">
+               <LinkIcon className="w-5 h-5 text-blue-500 mt-0.5" />
+               <div className="text-xs text-blue-800">
+                 <p className="font-semibold">Ready to submit?</p>
+                 <p className="mt-1">Paste your PR link here when you're done to unlock the code review call.</p>
+               </div>
+             </div>
+           </div>
         )}
       </div>
 

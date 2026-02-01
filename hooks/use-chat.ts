@@ -50,5 +50,5 @@ export function useChat(coworkers: Coworker[], scenario: Scenario) {
     }
   };
 
-  return { chats, typing, sendMessage };
+  return { chats, setChats, typing, sendMessage };
 }

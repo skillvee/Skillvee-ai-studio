@@ -1,15 +1,16 @@
 import React from 'react';
 import { Menu } from 'lucide-react';
 import { Badge, Avatar, AvatarImage, AvatarFallback } from '../ui/index';
-import { Coworker } from '../../types/index';
+import { Coworker, AssessmentStatus } from '../../types/index';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
   view: 'dashboard' | 'chat' | 'defense';
   activeCoworker: Coworker | undefined;
+  assessmentStatus?: AssessmentStatus;
 }
 
-export function Header({ onToggleSidebar, view, activeCoworker }: HeaderProps) {
+export function Header({ onToggleSidebar, view, activeCoworker, assessmentStatus }: HeaderProps) {
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-white px-4 md:px-6 shrink-0 z-10 shadow-sm">
       <button onClick={onToggleSidebar} className="md:hidden text-muted-foreground hover:text-foreground">
@@ -32,6 +33,11 @@ export function Header({ onToggleSidebar, view, activeCoworker }: HeaderProps) {
          {view === 'defense' && <span className="text-lg tracking-tight">Code Review Call</span>}
       </div>
       <div className="flex items-center gap-2">
+        {assessmentStatus === 'WORKING' && (
+          <Badge variant="outline" className="hidden sm:flex text-xs bg-green-50 text-green-700 border-green-200 animate-pulse">
+            ● Live Assessment
+          </Badge>
+        )}
         <Badge variant="secondary" className="hidden sm:flex font-mono text-xs bg-slate-100 text-slate-600">
           branch: feature/rate-limiting
         </Badge>

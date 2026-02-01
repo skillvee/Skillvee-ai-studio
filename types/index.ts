@@ -41,3 +41,16 @@ export interface AssessmentContext {
   coworkers: Coworker[];
   managerId: string;
 }
+
+export type AssessmentStatus = 'WELCOME' | 'WORKING' | 'COMPLETED';
+
+export interface AssessmentState {
+  id: string;
+  status: AssessmentStatus;
+  scenarioId: string;
+  candidateName: string;
+  prUrl: string | null;
+  managerMessagesStarted: boolean;
+  startedAt: Date;
+  completedAt: Date | null;
+}
