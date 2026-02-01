@@ -122,6 +122,11 @@ export function useVoiceConversation({ systemInstruction, voiceName }: UseVoiceC
 
       const inputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
       const outputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+      
+      // Critical: Resume contexts immediately as they might start in 'suspended' state
+      await inputCtx.resume();
+      await outputCtx.resume();
+
       inputAudioContextRef.current = inputCtx;
       outputAudioContextRef.current = outputCtx;
       const outputNode = outputCtx.createGain();
@@ -135,7 +140,8 @@ export function useVoiceConversation({ systemInstruction, voiceName }: UseVoiceC
         config: {
           responseModalities: [Modality.AUDIO],
           speechConfig: {
-            voiceConfig: { prebuiltVoiceConfig: { voiceName: voiceName || 'Aoede' } },
+            // Ensure we fallback to a default if voiceName is missing/invalid, though mapped correctly in mock data
+            voiceConfig: { prebuiltVoiceConfig: { voiceName: voiceName || 'Puck' } },
           },
           systemInstruction: systemInstruction,
         },
@@ -145,7 +151,8 @@ export function useVoiceConversation({ systemInstruction, voiceName }: UseVoiceC
             if (!mountedRef.current) return;
 
             const source = inputCtx.createMediaStreamSource(stream);
-            const scriptProcessor = inputCtx.createScriptProcessor(4096, 1, 1);
+            // Lower buffer size (2048) for lower latency while maintaining stability
+            const scriptProcessor = inputCtx.createScriptProcessor(2048, 1, 1);
             
             scriptProcessor.onaudioprocess = (e) => {
               if (!mountedRef.current) return;
@@ -190,11 +197,12 @@ export function useVoiceConversation({ systemInstruction, voiceName }: UseVoiceC
             }
 
             if (message.serverContent?.interrupted) {
+               console.log("Interrupted by user");
                sourcesRef.current.forEach(src => {
                  try { src.stop(); } catch(e) {}
                });
                sourcesRef.current.clear();
-               nextStartTimeRef.current = 0;
+               nextStartTimeRef.current = outputCtx.currentTime; // Reset timing to now
                if (mountedRef.current) setIsSpeaking(false);
             }
           },

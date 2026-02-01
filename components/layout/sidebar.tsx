@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Phone, X } from 'lucide-react';
+import { LayoutDashboard, Phone, X, Headphones } from 'lucide-react';
 import { Button, Avatar, AvatarImage, AvatarFallback, ScrollArea } from '../ui/index';
 import { cn } from '../../lib/utils';
 import { Coworker, Message, AssessmentStatus } from '../../types/index';
@@ -7,8 +7,8 @@ import { Coworker, Message, AssessmentStatus } from '../../types/index';
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  view: 'dashboard' | 'chat' | 'defense';
-  onNavigate: (view: 'dashboard' | 'chat' | 'defense') => void;
+  view: 'chat' | 'defense';
+  onNavigate: (view: 'chat' | 'defense') => void;
   activeCoworkerId: string | null;
   onSelectCoworker: (id: string | null) => void;
   coworkers: Coworker[];
@@ -22,118 +22,105 @@ export function Sidebar({ isOpen, onClose, view, onNavigate, activeCoworkerId, o
     <>
       <aside 
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-slate-300 transition-transform duration-300 ease-in-out md:relative md:translate-x-0 flex flex-col",
+          "fixed inset-y-0 left-0 z-50 w-[280px] bg-white border-r border-slate-100 transition-transform duration-300 ease-in-out md:relative md:translate-x-0 flex flex-col shadow-xl md:shadow-none",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="flex h-14 items-center border-b border-slate-800 px-4 shrink-0">
-          <div className="flex items-center gap-2 font-bold text-white">
-            <div className="h-6 w-6 rounded bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-              <span className="text-xs text-white">S</span>
+        {/* Header */}
+        <div className="h-16 flex items-center px-6 border-b border-slate-100 shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-lg bg-[#237CF1] flex items-center justify-center shadow-lg shadow-blue-500/20 text-white font-bold text-lg">
+              S
             </div>
-            <span>Skillvee</span>
+            <span className="font-bold text-lg text-slate-900 tracking-tight">Skillvee</span>
           </div>
           <button 
             onClick={onClose}
-            className="ml-auto md:hidden text-slate-400 hover:text-white"
+            className="ml-auto md:hidden text-slate-400 hover:text-slate-900"
           >
             <X size={20} />
           </button>
         </div>
 
-        <ScrollArea className="flex-1">
-          <div className="p-4 space-y-6">
+        <ScrollArea className="flex-1 px-4 py-6">
+          <div className="space-y-8">
+            
+            {/* Team List */}
             <div>
-              <div className="mb-2 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                Workspace
-              </div>
-              <Button
-                variant={view === 'dashboard' ? 'secondary' : 'ghost'}
-                className={cn("w-full justify-start gap-2 h-9", view === 'dashboard' ? "bg-slate-800 text-white hover:bg-slate-800" : "hover:bg-slate-800/50 hover:text-white")}
-                onClick={() => {
-                  onNavigate('dashboard');
-                  onSelectCoworker(null);
-                  onClose();
-                }}
-              >
-                <LayoutDashboard size={16} />
-                Project Brief
-              </Button>
-            </div>
-
-            <div>
-              <div className="mb-2 flex items-center justify-between px-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              <div className="px-3 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center justify-between">
                 <span>Team</span>
+                <span className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-[9px]">ONLINE</span>
               </div>
               <div className="space-y-1">
                 {coworkers.map(cw => {
+                  const isActive = activeCoworkerId === cw.id;
                   const hasMessages = chats?.[cw.id] && chats[cw.id].length > 0;
-                  const isUnread = hasMessages && cw.id !== activeCoworkerId;
                   
                   return (
-                    <Button
+                    <button
                       key={cw.id}
-                      variant={activeCoworkerId === cw.id ? 'secondary' : 'ghost'}
-                      className={cn(
-                        "w-full justify-start gap-2 relative h-10 group",
-                        activeCoworkerId === cw.id ? "bg-slate-800 text-white hover:bg-slate-800" : "hover:bg-slate-800/50 hover:text-white"
-                      )}
                       onClick={() => {
                         onSelectCoworker(cw.id);
                         onNavigate('chat');
                         onClose();
                       }}
-                    >
-                      <div className="relative">
-                        <Avatar className="h-6 w-6 border border-slate-600/50">
-                          <AvatarImage src={cw.avatarUrl} />
-                          <AvatarFallback className="bg-slate-700 text-[10px]">{cw.name[0]}</AvatarFallback>
-                        </Avatar>
-                        <span className={cn("absolute -bottom-0.5 -right-0.5 block h-2 w-2 rounded-full ring-2 ring-slate-900", cw.isOnline ? "bg-green-500" : "bg-slate-500")} />
-                      </div>
-                      <span className={cn("truncate text-sm flex-1 text-left", isUnread && "font-semibold text-white")}>{cw.name}</span>
-                      {isUnread && (
-                        <span className="h-2 w-2 rounded-full bg-primary" />
+                      className={cn(
+                        "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left transition-all duration-200 group relative",
+                        isActive 
+                          ? "bg-[#237CF1]/10 text-[#237CF1] ring-1 ring-[#237CF1]/20" 
+                          : "hover:bg-slate-50 text-slate-700"
                       )}
-                    </Button>
+                    >
+                      <div className="relative shrink-0">
+                        <Avatar className="h-8 w-8 border-2 border-white shadow-sm">
+                          <AvatarImage src={cw.avatarUrl} />
+                          <AvatarFallback className="bg-slate-100 text-slate-500 text-xs font-bold">{cw.name[0]}</AvatarFallback>
+                        </Avatar>
+                        <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-[#22C55E] border-2 border-white" />
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className={cn("text-sm font-semibold truncate", isActive ? "text-[#237CF1]" : "text-slate-900")}>
+                          {cw.name}
+                        </div>
+                        <div className={cn("text-[10px] truncate", isActive ? "text-[#237CF1]/80" : "text-slate-400")}>
+                          {cw.role}
+                        </div>
+                      </div>
+
+                      <div className={cn(
+                        "p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all",
+                        isActive ? "bg-[#237CF1] text-white" : "bg-slate-200 text-slate-500 hover:bg-[#237CF1] hover:text-white"
+                      )}>
+                        <Headphones size={12} />
+                      </div>
+                    </button>
                   );
                 })}
               </div>
             </div>
-
-            <div className="pt-4 border-t border-slate-800">
-              <div className="mb-2 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                Evaluation
-              </div>
-              <Button
-                variant={view === 'defense' ? 'default' : 'outline'}
-                disabled={!prUrl}
-                className={cn(
-                  "w-full justify-start gap-2 border-slate-700 hover:bg-slate-800 hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed",
-                  view === 'defense' && "bg-primary hover:bg-primary/90 text-white border-transparent shadow-[0_0_15px_-3px_rgba(35,124,241,0.4)]"
-                )}
-                onClick={() => {
-                  onNavigate('defense');
-                  onSelectCoworker(null);
-                  onClose();
-                }}
-              >
-                <Phone size={16} />
-                {prUrl ? 'Start Defense Call' : 'Submit PR First'}
-              </Button>
-            </div>
           </div>
         </ScrollArea>
         
-        <div className="p-4 border-t border-slate-800 text-[10px] text-slate-600 flex justify-between">
-           <span>v1.0.0 • Simulator</span>
-           {assessmentStatus && <span className="uppercase text-slate-500">{assessmentStatus}</span>}
+        {/* Footer */}
+        <div className="p-4 border-t border-slate-100">
+           <div className="flex items-center justify-between text-[10px] font-medium text-slate-400">
+             <span>v1.2.0</span>
+             {assessmentStatus && (
+               <span className={cn(
+                 "px-1.5 py-0.5 rounded border uppercase",
+                 assessmentStatus === 'WORKING' ? "bg-green-50 text-green-600 border-green-200" : "bg-slate-100 border-slate-200"
+               )}>
+                 {assessmentStatus}
+               </span>
+             )}
+           </div>
         </div>
       </aside>
 
       {isOpen && (
         <div 
-          className="fixed inset-0 z-40 bg-black/50 md:hidden backdrop-blur-sm"
+          className="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-sm md:hidden"
           onClick={onClose}
         />
       )}

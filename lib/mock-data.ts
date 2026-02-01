@@ -16,7 +16,7 @@ export const COWORKERS_DATA: Coworker[] = [
     role: "Engineering Manager",
     personaStyle: "Direct, supportive, focused on scalability and code quality. Busy but makes time.",
     avatarUrl: "https://picsum.photos/200/200?random=1",
-    voiceName: "Orus",
+    voiceName: "Fenrir", // Deep, authoritative male voice
     isOnline: true,
     knowledge: []
   },
@@ -26,7 +26,7 @@ export const COWORKERS_DATA: Coworker[] = [
     role: "Senior Backend Engineer",
     personaStyle: "Extremely knowledgeable, helpful but expects you to read docs first. Uses lot of dev slang.",
     avatarUrl: "https://picsum.photos/200/200?random=2",
-    voiceName: "Aoede",
+    voiceName: "Kore", // Calm, clear female voice
     isOnline: true,
     knowledge: [
       { topic: "Redis", triggerKeywords: ["redis", "cache", "store"], response: "We use a standard Redis client wrapper in `src/lib/redis.ts`. Don't use the raw client directly.", isCritical: true },
@@ -39,7 +39,7 @@ export const COWORKERS_DATA: Coworker[] = [
     role: "Frontend Developer",
     personaStyle: "Super chill, loves Tailwind, always down to chat but doesn't know much backend.",
     avatarUrl: "https://picsum.photos/200/200?random=3",
-    voiceName: "Puck",
+    voiceName: "Puck", // Playful, higher pitched male voice
     isOnline: false,
     knowledge: []
   }

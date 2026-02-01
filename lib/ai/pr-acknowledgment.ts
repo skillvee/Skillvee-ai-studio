@@ -1,22 +1,18 @@
 import { GoogleGenAI } from "@google/genai";
 
-const PR_ACKNOWLEDGMENT_PROMPT = `You are an engineering manager. The candidate just submitted their PR link for review.
+const PR_ACKNOWLEDGMENT_PROMPT = `You are an engineering manager. The candidate just submitted their PR link for review in Slack.
 
-Generate a short, warm acknowledgment (2-3 sentences max). Include:
-1. Thanks/acknowledgment that you received the PR
-2. Mention you'll take a quick look
-3. Say you'll call them to discuss
+Generate a short, friendly response (1-2 sentences). 
+CRITICAL: You must explicitly say that you are calling them RIGHT NOW to discuss it.
 
-Sound like a real manager on Slack - casual, friendly, brief. Don't be over-the-top enthusiastic.
-
-Examples of good responses:
-- "Nice! Got your PR. Let me take a quick look and I'll ping you for a call in a few."
-- "Sweet, thanks for submitting! I'll review this real quick and then we can hop on a call to go through it."
-- "Got it! Let me pull this up and take a peek. I'll call you shortly to chat about your approach."
+Examples:
+- "Nice! Received. Calling you now to go over it."
+- "Fast work! Let me give you a quick call to walk through the changes."
+- "Got it. I'll dial you in a sec to do a quick live review."
 
 PR URL: {prUrl}
 
-Respond with ONLY the acknowledgment message, nothing else.`;
+Respond with ONLY the message text.`;
 
 export async function generatePRAcknowledgment(
   managerName: string,
@@ -26,7 +22,7 @@ export async function generatePRAcknowledgment(
 
   if (!API_KEY) {
     // Fallback if no API key
-    return "Got it! Let me take a look at your PR. I'll call you in a few to discuss your approach.";
+    return "Got it! Calling you now to walk through it together.";
   }
 
   const ai = new GoogleGenAI({ apiKey: API_KEY });
@@ -40,9 +36,9 @@ export async function generatePRAcknowledgment(
       }],
     });
 
-    return response.text?.trim() || "Got it! Let me review your PR and I'll call you to discuss.";
+    return response.text?.trim() || "Received. Calling you now to discuss.";
   } catch (e) {
     console.error('Failed to generate PR acknowledgment:', e);
-    return "Thanks for submitting! I'll take a look and give you a call to go over it.";
+    return "Thanks! Calling you now to go over the PR.";
   }
 }

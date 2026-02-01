@@ -22,6 +22,7 @@ export function useAssessment({
     candidateName,
     prUrl: null,
     managerMessagesStarted: false,
+    defenseCallStarted: false,
     startedAt: new Date(),
     completedAt: null,
   });
@@ -77,6 +78,14 @@ export function useAssessment({
     }));
   }, []);
 
+  // Mark defense call as started
+  const markDefenseCallStarted = useCallback(() => {
+    setState(prev => ({
+      ...prev,
+      defenseCallStarted: true,
+    }));
+  }, []);
+
   // Complete assessment
   const completeAssessment = useCallback(() => {
     setState(prev => ({
@@ -91,6 +100,7 @@ export function useAssessment({
     manager,
     startAssessment,
     submitPR,
+    markDefenseCallStarted,
     completeAssessment,
   };
 }

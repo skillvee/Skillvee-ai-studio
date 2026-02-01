@@ -51,6 +51,7 @@ export interface AssessmentState {
   candidateName: string;
   prUrl: string | null;
   managerMessagesStarted: boolean;
+  defenseCallStarted: boolean;
   startedAt: Date;
   completedAt: Date | null;
 }

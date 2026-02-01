@@ -1,9 +1,10 @@
-import React from 'react';
-import { PhoneOff, Mic, X } from 'lucide-react';
-import { Button, Avatar, AvatarImage, AvatarFallback, Badge } from '../ui/index';
+import React, { useState, useEffect } from 'react';
+import { PhoneOff, Mic, X, Phone } from 'lucide-react';
+import { Button, Avatar, AvatarImage, AvatarFallback } from '../ui/index';
 import { cn } from '../../lib/utils';
 import { useVoiceConversation } from '../../hooks/use-voice-conversation';
 import { buildCoworkerVoicePrompt, summarizeChatForVoice } from '../../prompts/coworker-voice';
+import { buildDefensePrompt } from '../../prompts/manager';
 import { Coworker, Scenario, Message } from '../../types/index';
 
 interface VoiceCallOverlayProps {
@@ -11,17 +12,31 @@ interface VoiceCallOverlayProps {
   scenario: Scenario;
   messages: Message[];
   onClose: () => void;
+  prUrl?: string | null;
+  isIncoming?: boolean;
 }
 
-export function VoiceCallOverlay({ coworker, scenario, messages, onClose }: VoiceCallOverlayProps) {
-  const chatHistory = summarizeChatForVoice(messages);
-
-  const systemInstruction = buildCoworkerVoicePrompt({
-    coworker,
-    scenario,
-    candidateName: 'Candidate',
-    chatHistory: chatHistory || undefined,
-  });
+export function VoiceCallOverlay({ coworker, scenario, messages, onClose, prUrl, isIncoming = false }: VoiceCallOverlayProps) {
+  const [callStatus, setCallStatus] = useState<'incoming' | 'connected'>(isIncoming ? 'incoming' : 'connected');
+  
+  // Decide which prompt to use: Defense/Review or Standard Coworker Chat
+  const systemInstruction = prUrl 
+    ? buildDefensePrompt({
+        managerName: coworker.name,
+        managerRole: coworker.role,
+        companyName: scenario.companyName,
+        candidateName: 'Candidate',
+        taskDescription: scenario.taskDescription,
+        techStack: scenario.techStack,
+        repoUrl: scenario.repoUrl,
+        prUrl: prUrl,
+      })
+    : buildCoworkerVoicePrompt({
+        coworker,
+        scenario,
+        candidateName: 'Candidate',
+        chatHistory: summarizeChatForVoice(messages),
+      });
 
   const {
     isActive,
@@ -39,113 +54,173 @@ export function VoiceCallOverlay({ coworker, scenario, messages, onClose }: Voic
     onClose();
   };
 
-  // Auto-start call when overlay opens
-  React.useEffect(() => {
-    startCall();
+  const handleAnswer = () => {
+    setCallStatus('connected');
+  };
+
+  useEffect(() => {
+    if (callStatus === 'connected') {
+      startCall();
+    }
     return () => {
       endCall();
     };
-  }, []);
+  }, [callStatus]);
+
+  if (callStatus === 'incoming') {
+    return (
+      <div className="fixed bottom-6 left-6 z-[100] w-[280px] animate-slide-up">
+        <div className="bg-white rounded-2xl shadow-2xl shadow-slate-900/20 border border-slate-100 overflow-hidden relative p-6">
+          <div className="absolute inset-0 bg-gradient-to-b from-blue-50/50 to-transparent pointer-events-none" />
+          
+          <div className="flex flex-col items-center relative z-10">
+            {/* Pulsing Avatar */}
+            <div className="relative mb-5">
+              <div className="absolute inset-0 rounded-full bg-[#237CF1]/20 animate-[ping_1.5s_ease-in-out_infinite]" />
+              <div className="absolute inset-0 rounded-full border border-[#237CF1] animate-[pulse_2s_ease-in-out_infinite]" />
+              <Avatar className="h-20 w-20 border-4 border-white shadow-lg relative z-10">
+                <AvatarImage src={coworker.avatarUrl} />
+                <AvatarFallback className="bg-slate-100 text-slate-600 font-bold text-xl">{coworker.name[0]}</AvatarFallback>
+              </Avatar>
+            </div>
+
+            <div className="text-center mb-8">
+              <h3 className="font-bold text-xl text-slate-900 leading-tight mb-1">{coworker.name}</h3>
+              <p className="text-sm text-[#237CF1] font-semibold animate-pulse">Incoming Call...</p>
+            </div>
+
+            <div className="flex items-center gap-4 w-full justify-center">
+              <button 
+                onClick={handleEndCall}
+                className="flex flex-col items-center gap-2 group"
+              >
+                <div className="h-12 w-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center transition-all group-hover:bg-red-200 group-hover:scale-110">
+                  <PhoneOff size={20} />
+                </div>
+                <span className="text-xs font-medium text-slate-500">Decline</span>
+              </button>
+
+              <button 
+                onClick={handleAnswer}
+                className="flex flex-col items-center gap-2 group"
+              >
+                <div className="h-14 w-14 rounded-full bg-[#22C55E] text-white flex items-center justify-center shadow-lg shadow-green-500/30 transition-all group-hover:bg-green-500 group-hover:scale-110 animate-bounce">
+                  <Phone size={24} />
+                </div>
+                <span className="text-xs font-medium text-slate-900 font-bold">Answer</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/95 backdrop-blur-sm animate-fade-in">
-      {/* Close button */}
-      <button
-        onClick={handleEndCall}
-        className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white transition-colors"
-      >
-        <X size={24} />
-      </button>
-
-      {/* Ambient background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className={cn(
-          "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full blur-[100px] transition-all duration-1000",
-          isActive ? "bg-primary/30 opacity-100" : "bg-slate-700/20 opacity-50"
-        )} />
-      </div>
-
-      <div className="z-10 flex flex-col items-center space-y-6 text-white">
-        {/* Header */}
-        <div className="text-center space-y-1">
-          <Badge variant="outline" className="text-green-400 border-green-400/30 bg-green-400/10">
-            Voice Call
-          </Badge>
-          <h3 className="text-xl font-semibold mt-2">{coworker.name}</h3>
-          <p className="text-slate-400 text-sm">{coworker.role}</p>
-        </div>
-
-        {/* Avatar with rings */}
-        <div className="relative">
-          {isActive && (
-            <>
-              <div className={cn(
-                "absolute inset-0 rounded-full border-2 transition-all duration-300",
-                isSpeaking
-                  ? "border-primary scale-125 opacity-100"
-                  : "border-slate-600 scale-100 opacity-30"
-              )} />
-              <div className={cn(
-                "absolute inset-0 rounded-full border transition-all duration-500 delay-100",
-                isSpeaking
-                  ? "border-primary/50 scale-150 opacity-100"
-                  : "border-slate-700 scale-100 opacity-20"
-              )} />
-            </>
-          )}
-
-          <Avatar className="h-28 w-28 border-4 border-slate-800 shadow-2xl relative z-10">
-            <AvatarImage src={coworker.avatarUrl} />
-            <AvatarFallback className="bg-slate-700 text-3xl">
-              {coworker.name[0]}
-            </AvatarFallback>
-          </Avatar>
-
-          {/* Mic indicator */}
-          <div className={cn(
-            "absolute -bottom-1 -right-1 h-8 w-8 rounded-full border-4 border-slate-900 flex items-center justify-center transition-colors",
-            isActive ? "bg-green-500" : "bg-slate-600"
-          )}>
-            <Mic size={14} className={isActive ? "text-white animate-pulse" : "text-slate-400"} />
-          </div>
-        </div>
-
-        {/* Status */}
-        <div className="h-6 flex items-center justify-center">
-          {isActive ? (
-            isSpeaking ? (
-              <div className="flex items-center gap-1.5">
-                <span className="w-1 h-3 bg-primary rounded-full animate-[pulse_0.5s_ease-in-out_infinite]" />
-                <span className="w-1 h-4 bg-primary rounded-full animate-[pulse_0.5s_ease-in-out_infinite_0.1s]" />
-                <span className="w-1 h-3 bg-primary rounded-full animate-[pulse_0.5s_ease-in-out_infinite_0.2s]" />
-                <span className="ml-2 text-primary text-xs uppercase tracking-wider">Speaking</span>
-              </div>
-            ) : (
-              <span className="text-slate-400 text-xs uppercase tracking-wider">Listening...</span>
-            )
-          ) : (
-            <span className="text-slate-500 text-xs">Connecting...</span>
-          )}
-        </div>
-
-        {/* Error */}
-        {error && (
-          <div className="px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs">
-            {error}
-          </div>
-        )}
-
-        {/* End call button */}
-        <Button
-          size="lg"
-          variant="destructive"
-          className="rounded-full px-8 shadow-lg"
+    <div className="fixed bottom-6 left-6 z-[100] w-[260px] animate-slide-up">
+      <div className="bg-white rounded-2xl shadow-2xl shadow-slate-900/20 border border-slate-100 overflow-hidden relative">
+        {/* Glow effect background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#237CF1]/5 to-transparent pointer-events-none" />
+        
+        {/* Close Button */}
+        <button 
           onClick={handleEndCall}
+          className="absolute top-2 right-2 text-slate-300 hover:text-slate-500 transition-colors z-20"
         >
-          <PhoneOff className="mr-2 h-5 w-5" />
-          End Call
-        </Button>
+          <X size={14} />
+        </button>
+
+        <div className="p-5 flex flex-col items-center relative z-10">
+          
+          {/* Top Section: Avatar & Status */}
+          <div className="relative mb-4">
+             {/* Ring Animations */}
+             {isActive && (
+                <>
+                  <div className={cn(
+                    "absolute inset-0 rounded-full border-2 border-[#22C55E] transition-all duration-300",
+                    isSpeaking ? "scale-125 opacity-100" : "scale-100 opacity-0"
+                  )} />
+                  <div className={cn(
+                    "absolute inset-0 rounded-full bg-[#22C55E]/10 transition-all duration-1000",
+                    isActive ? "scale-150 animate-pulse" : "scale-100 opacity-0"
+                  )} />
+                </>
+             )}
+
+             <Avatar className="h-14 w-14 border-2 border-white shadow-md relative z-10">
+               <AvatarImage src={coworker.avatarUrl} />
+               <AvatarFallback className="bg-slate-100 text-slate-600 font-bold">{coworker.name[0]}</AvatarFallback>
+             </Avatar>
+             
+             {/* Connection Status Badge */}
+             <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap z-20">
+               {error ? (
+                 <span className="bg-red-100 text-red-600 text-[9px] font-bold px-2 py-0.5 rounded-full border border-red-200">
+                   ERROR
+                 </span>
+               ) : (
+                 <div className="bg-white text-[10px] font-bold text-slate-800 px-2 py-0.5 rounded-full border border-slate-100 shadow-sm flex items-center gap-1">
+                   <span className={cn("w-1.5 h-1.5 rounded-full", isActive ? "bg-[#22C55E]" : "bg-slate-300")} />
+                   {isActive ? (prUrl ? "Reviewing PR..." : "Connected") : "Connecting..."}
+                 </div>
+               )}
+             </div>
+          </div>
+
+          <div className="text-center mb-6">
+            <h3 className="font-bold text-slate-900 leading-tight">{coworker.name}</h3>
+            <p className="text-xs text-slate-400 font-medium mt-0.5">{prUrl ? 'PR Review Call' : 'Voice Call'}</p>
+          </div>
+
+          {/* Controls */}
+          <div className="flex items-center justify-between w-full gap-2">
+            
+            {/* Mute (Visual only) */}
+            <button className="h-10 w-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:bg-slate-50 transition-colors">
+              <Mic size={16} />
+            </button>
+
+            {/* Waveform */}
+            <div className="h-8 flex items-center justify-center gap-0.5 flex-1">
+               {isActive ? (
+                 Array.from({ length: 8 }).map((_, i) => (
+                   <div 
+                     key={i}
+                     className={cn(
+                       "w-1 bg-[#237CF1] rounded-full transition-all duration-100",
+                       isSpeaking 
+                         ? "animate-[music-bar_0.4s_ease-in-out_infinite]" 
+                         : "h-1 opacity-20"
+                     )}
+                     style={{ 
+                       animationDelay: `${i * 0.05}s`,
+                       height: isSpeaking ? undefined : '4px'
+                     }}
+                   />
+                 ))
+               ) : (
+                 <span className="text-[10px] text-slate-300">...</span>
+               )}
+            </div>
+
+            {/* End Call */}
+            <button 
+              onClick={handleEndCall}
+              className="h-10 w-10 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg shadow-red-500/30 hover:bg-red-600 hover:scale-105 active:scale-95 transition-all"
+            >
+              <PhoneOff size={16} />
+            </button>
+          </div>
+        </div>
       </div>
+      
+      <style>{`
+        @keyframes music-bar {
+          0%, 100% { height: 4px; opacity: 0.5; }
+          50% { height: 16px; opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 }
