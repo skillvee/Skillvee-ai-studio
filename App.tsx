@@ -14,6 +14,7 @@ export default function App() {
   const [view, setView] = useState<ViewState>('welcome');
   const [activeCoworkerId, setActiveCoworkerId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [autoStartCall, setAutoStartCall] = useState(false);
 
   const scenario = SCENARIO_DATA;
   const coworkers = COWORKERS_DATA;
@@ -69,6 +70,11 @@ export default function App() {
           setActiveCoworkerId(id);
           setView('chat');
         }}
+        onStartCall={(id) => {
+          setActiveCoworkerId(id);
+          setView('chat');
+          setAutoStartCall(true);
+        }}
         coworkers={coworkers}
         chats={chats}
         assessmentStatus={assessmentState.status}
@@ -98,6 +104,8 @@ export default function App() {
               assessmentState={assessmentState}
               scenario={scenario}
               onDefenseCallStarted={markDefenseCallStarted}
+              shouldStartCall={autoStartCall}
+              onCallStartHandled={() => setAutoStartCall(false)}
             />
           )}
         </div>

@@ -13,6 +13,8 @@ interface ChatInterfaceProps {
   assessmentState?: AssessmentState;
   scenario: Scenario;
   onDefenseCallStarted?: () => void;
+  shouldStartCall?: boolean;
+  onCallStartHandled?: () => void;
 }
 
 export function ChatInterface({ 
@@ -22,11 +24,14 @@ export function ChatInterface({
   isTyping, 
   assessmentState,
   scenario,
-  onDefenseCallStarted
+  onDefenseCallStarted,
+  shouldStartCall,
+  onCallStartHandled
 }: ChatInterfaceProps) {
   const [inputValue, setInputValue] = useState("");
   const [isInCall, setIsInCall] = useState(false);
   const [isIncomingCall, setIsIncomingCall] = useState(false);
+  const [isInputFocused, setIsInputFocused] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom
@@ -36,7 +41,7 @@ export function ChatInterface({
     }
   }, [messages, isTyping]);
 
-  // Check for auto-start defense call condition
+  // Check for auto-start defense call condition (incoming from manager)
   useEffect(() => {
     if (
       assessmentState?.prUrl && // PR submitted
@@ -54,6 +59,15 @@ export function ChatInterface({
       return () => clearTimeout(timer);
     }
   }, [assessmentState?.prUrl, assessmentState?.defenseCallStarted, coworker, isInCall, onDefenseCallStarted]);
+
+  // Check for manual auto-start (from sidebar headphone click)
+  useEffect(() => {
+    if (shouldStartCall) {
+      setIsIncomingCall(false);
+      setIsInCall(true);
+      if (onCallStartHandled) onCallStartHandled();
+    }
+  }, [shouldStartCall, onCallStartHandled]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -190,19 +204,28 @@ export function ChatInterface({
       {/* INPUT AREA */}
       <div className="shrink-0 p-4 bg-white border-t border-slate-100">
         <form onSubmit={handleSubmit} className="relative max-w-4xl mx-auto">
-          <div className="relative group">
+          <div 
+            className={cn(
+              "flex items-center gap-2 rounded-full border transition-all duration-200 p-2 pl-4",
+              isInputFocused 
+                ? "bg-white border-[#237CF1] ring-2 ring-[#237CF1]/20 shadow-sm" 
+                : "bg-[#F4F4F5] border-slate-200"
+            )}
+          >
             <input 
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
+              onFocus={() => setIsInputFocused(true)}
+              onBlur={() => setIsInputFocused(false)}
               placeholder="Type a message..."
-              className="w-full h-[52px] pl-6 pr-14 rounded-full bg-[#F4F4F5] border border-transparent focus:bg-white focus:border-[#237CF1] focus:ring-4 focus:ring-[#237CF1]/10 outline-none transition-all placeholder:text-slate-400 text-slate-900 text-[15px]"
+              className="flex-1 bg-transparent outline-none text-[15px] placeholder:text-slate-400 text-slate-900 min-w-0"
               autoFocus
             />
             <button 
               type="submit" 
               disabled={!inputValue.trim()}
               className={cn(
-                "absolute right-2 top-2 h-9 w-9 rounded-full flex items-center justify-center transition-all duration-200",
+                "h-9 w-9 rounded-full flex items-center justify-center transition-all duration-200 shrink-0",
                 inputValue.trim() 
                   ? "bg-[#237CF1] text-white shadow-md hover:bg-blue-600 hover:scale-105 active:scale-95" 
                   : "bg-slate-200 text-slate-400 cursor-not-allowed"

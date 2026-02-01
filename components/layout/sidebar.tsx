@@ -11,13 +11,14 @@ interface SidebarProps {
   onNavigate: (view: 'chat' | 'defense') => void;
   activeCoworkerId: string | null;
   onSelectCoworker: (id: string | null) => void;
+  onStartCall: (id: string) => void;
   coworkers: Coworker[];
   chats?: Record<string, Message[]>;
   assessmentStatus?: AssessmentStatus;
   prUrl?: string | null;
 }
 
-export function Sidebar({ isOpen, onClose, view, onNavigate, activeCoworkerId, onSelectCoworker, coworkers, chats, assessmentStatus, prUrl }: SidebarProps) {
+export function Sidebar({ isOpen, onClose, view, onNavigate, activeCoworkerId, onSelectCoworker, onStartCall, coworkers, chats, assessmentStatus, prUrl }: SidebarProps) {
   return (
     <>
       <aside 
@@ -88,10 +89,18 @@ export function Sidebar({ isOpen, onClose, view, onNavigate, activeCoworkerId, o
                         </div>
                       </div>
 
-                      <div className={cn(
-                        "p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all",
-                        isActive ? "bg-[#237CF1] text-white" : "bg-slate-200 text-slate-500 hover:bg-[#237CF1] hover:text-white"
-                      )}>
+                      <div 
+                        role="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onStartCall(cw.id);
+                          onClose();
+                        }}
+                        className={cn(
+                          "p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all cursor-pointer",
+                          isActive ? "bg-[#237CF1] text-white" : "bg-slate-200 text-slate-500 hover:bg-[#237CF1] hover:text-white"
+                        )}
+                      >
                         <Headphones size={12} />
                       </div>
                     </button>
@@ -101,21 +110,6 @@ export function Sidebar({ isOpen, onClose, view, onNavigate, activeCoworkerId, o
             </div>
           </div>
         </ScrollArea>
-        
-        {/* Footer */}
-        <div className="p-4 border-t border-slate-100">
-           <div className="flex items-center justify-between text-[10px] font-medium text-slate-400">
-             <span>v1.2.0</span>
-             {assessmentStatus && (
-               <span className={cn(
-                 "px-1.5 py-0.5 rounded border uppercase",
-                 assessmentStatus === 'WORKING' ? "bg-green-50 text-green-600 border-green-200" : "bg-slate-100 border-slate-200"
-               )}>
-                 {assessmentStatus}
-               </span>
-             )}
-           </div>
-        </div>
       </aside>
 
       {isOpen && (
