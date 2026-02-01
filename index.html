@@ -4,94 +4,24 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Skillvee Simulator</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            colors: {
-              primary: {
-                DEFAULT: '#237CF1', // HSL 217 91% 54%
-                foreground: '#FFFFFF',
-              },
-              background: '#FFFFFF',
-              foreground: '#1A1A1A',
-              muted: {
-                DEFAULT: '#F4F4F5',
-                foreground: '#71717A',
-              },
-              border: '#E4E4E7',
-              destructive: {
-                DEFAULT: '#EF4444',
-                foreground: '#FFFFFF',
-              },
-            },
-            fontFamily: {
-              sans: ['Figtree', 'system-ui', 'sans-serif'],
-              mono: ['Space Mono', 'monospace'],
-            },
-            borderRadius: {
-              lg: '0.5rem',
-              md: '0.375rem',
-              sm: '0.25rem',
-            },
-            keyframes: {
-              fadeIn: { 'from': { opacity: 0 }, 'to': { opacity: 1 } },
-              slideUp: { 'from': { opacity: 0, transform: 'translateY(10px)' }, 'to': { opacity: 1, transform: 'translateY(0)' } },
-              pulseScale: { '0%, 100%': { transform: 'scale(1)', opacity: 0.5 }, '50%': { transform: 'scale(1.5)', opacity: 0.2 } },
-            },
-            animation: {
-              'fade-in': 'fadeIn 0.3s ease-out',
-              'slide-up': 'slideUp 0.3s ease-out',
-              'pulse-slow': 'pulseScale 2s infinite ease-in-out',
-            }
-          }
-        }
-      }
-    </script>
-    <style>
-      @import url("https://fonts.googleapis.com/css2?family=Figtree:wght@300..900&family=Space+Mono:wght@400;700&display=swap");
-      
-      body {
-        font-family: 'Figtree', sans-serif;
-      }
-      code, pre {
-        font-family: 'Space Mono', monospace;
-      }
-      
-      /* Scrollbar styling for Slack-like feel */
-      ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-      }
-      ::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #E4E4E7;
-        border-radius: 4px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #A1A1AA;
-      }
-    </style>
   <script type="importmap">
 {
   "imports": {
     "react": "https://esm.sh/react@^19.2.4",
     "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
     "react/": "https://esm.sh/react@^19.2.4/",
-    "@google/genai": "https://esm.sh/@google/genai@^1.39.0",
-    "tailwind-merge": "https://esm.sh/tailwind-merge@^3.4.0",
     "clsx": "https://esm.sh/clsx@^2.1.1",
+    "tailwind-merge": "https://esm.sh/tailwind-merge@^3.4.0",
+    "@google/genai": "https://esm.sh/@google/genai@^1.39.0",
     "class-variance-authority": "https://esm.sh/class-variance-authority@^0.7.1",
-    "lucide-react": "https://esm.sh/lucide-react@^0.475.0"
+    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
+    "tailwindcss": "https://esm.sh/tailwindcss@^4.1.18"
   }
 }
 </script>
 </head>
   <body class="bg-background text-foreground antialiased h-screen overflow-hidden">
     <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>
