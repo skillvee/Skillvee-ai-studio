@@ -1,9 +1,18 @@
 import { Coworker } from '../types/index';
 
-export function buildCoworkerBasePrompt(coworker: Coworker, context: { companyName: string; candidateName: string; taskDescription: string; techStack: string[] }) {
+export function buildCoworkerBasePrompt(
+  coworker: Coworker, 
+  context: { 
+    companyName: string; 
+    candidateName: string; 
+    taskDescription: string; 
+    techStack: string[] 
+  },
+  crossCoworkerContext?: string
+) {
   const knowledgeSection = coworker.knowledge.map(k => `- Topic: ${k.topic}\n  - Triggers: ${k.triggerKeywords.join(", ")}\n  - Key Info: ${k.response}`).join("\n");
 
-  return `You are ${coworker.name}, a ${coworker.role} at ${context.companyName}. A new team member (${context.candidateName || "the candidate"}) is reaching out to you while working on their first task.
+  let prompt = `You are ${coworker.name}, a ${coworker.role} at ${context.companyName}. A new team member (${context.candidateName || "the candidate"}) is reaching out to you while working on their first task.
 
 ## Who You Are
 
@@ -49,4 +58,10 @@ ${knowledgeSection}
 - If their question is vague, ask for clarification
 - If they ask a good question, just answer it
 - Match the energy - casual questions get casual answers`;
+
+  if (crossCoworkerContext) {
+    prompt += crossCoworkerContext;
+  }
+
+  return prompt;
 }

@@ -2,6 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 import { Message, Coworker, Scenario } from "../../types/index";
 import { buildCoworkerBasePrompt } from "../../prompts/coworker";
 import { buildDefensePrompt } from "../../prompts/manager";
+import { buildCrossCoworkerContext } from "./conversation-context";
 
 export async function generateCoworkerResponse(
   coworker: Coworker,
@@ -9,7 +10,9 @@ export async function generateCoworkerResponse(
   lastUserMessage: string,
   scenario: Scenario,
   candidateName: string = "Candidate",
-  prUrl: string | null = null
+  prUrl: string | null = null,
+  allChats?: Record<string, Message[]>,
+  allCoworkers?: Coworker[]
 ): Promise<string> {
   const isManager = coworker.role.toLowerCase().includes("manager");
   const isDefense = isManager && !!prUrl;
@@ -31,12 +34,17 @@ export async function generateCoworkerResponse(
       prUrl
     });
   } else {
+    // Build cross-coworker context
+    const crossContext = (allChats && allCoworkers)
+      ? buildCrossCoworkerContext(coworker.id, allChats, allCoworkers)
+      : '';
+
     systemPrompt = buildCoworkerBasePrompt(coworker, {
       companyName: scenario.companyName,
       candidateName,
       taskDescription: scenario.taskDescription,
       techStack: scenario.techStack
-    });
+    }, crossContext);
   }
 
   const contentParts = [

@@ -68,7 +68,11 @@ export function useChat(coworkers: Coworker[], scenario: Scenario) {
           coworker,
           updatedHistory,
           text,
-          scenario
+          scenario,
+          'Candidate',
+          null,
+          chats,
+          coworkers
         );
       }
 
