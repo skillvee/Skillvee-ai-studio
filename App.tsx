@@ -106,6 +106,7 @@ export default function App() {
                   )}
                   isTyping={typing[activeCoworkerId]}
                   assessmentState={assessmentState}
+                  scenario={scenario}
                 />
               )}
 

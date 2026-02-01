@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, Send, Link as LinkIcon, CheckCircle2 } from 'lucide-react';
-import { Button, Input, Avatar, AvatarImage, AvatarFallback, Card, CardContent } from '../ui/index';
+import { MessageSquare, Send, Link as LinkIcon, Phone } from 'lucide-react';
+import { Button, Input, Avatar, AvatarImage, AvatarFallback } from '../ui/index';
 import { cn } from '../../lib/utils';
-import { Message, Coworker, AssessmentState } from '../../types/index';
+import { Message, Coworker, AssessmentState, Scenario } from '../../types/index';
+import { VoiceCallOverlay } from './voice-call-overlay';
 
 interface ChatInterfaceProps {
   coworker: Coworker;
@@ -10,10 +11,19 @@ interface ChatInterfaceProps {
   onSendMessage: (text: string) => void;
   isTyping?: boolean;
   assessmentState?: AssessmentState;
+  scenario: Scenario;
 }
 
-export function ChatInterface({ coworker, messages, onSendMessage, isTyping, assessmentState }: ChatInterfaceProps) {
+export function ChatInterface({ 
+  coworker, 
+  messages, 
+  onSendMessage, 
+  isTyping, 
+  assessmentState,
+  scenario 
+}: ChatInterfaceProps) {
   const [inputValue, setInputValue] = useState("");
+  const [isInCall, setIsInCall] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -48,7 +58,42 @@ export function ChatInterface({ coworker, messages, onSendMessage, isTyping, ass
   const showPRHint = isManager && assessmentState?.status === 'WORKING' && !assessmentState.prUrl && messages.length > 2;
 
   return (
-    <div className="flex flex-col h-full bg-slate-50">
+    <div className="flex flex-col h-full bg-slate-50 relative">
+      {/* Voice Call Overlay */}
+      {isInCall && scenario && (
+        <VoiceCallOverlay
+          coworker={coworker}
+          scenario={scenario}
+          messages={messages}
+          onClose={() => setIsInCall(false)}
+        />
+      )}
+
+      {/* Chat Header with Call Button */}
+      <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-slate-200">
+        <div className="flex items-center gap-3">
+          <Avatar className="h-10 w-10 border border-slate-200">
+            <AvatarImage src={coworker.avatarUrl} />
+            <AvatarFallback>{coworker.name[0]}</AvatarFallback>
+          </Avatar>
+          <div>
+            <h3 className="font-semibold text-slate-900">{coworker.name}</h3>
+            <p className="text-xs text-slate-500">{coworker.role}</p>
+          </div>
+        </div>
+
+        {/* Call Button */}
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2 text-green-600 border-green-200 hover:bg-green-50 hover:border-green-300"
+          onClick={() => setIsInCall(true)}
+        >
+          <Phone size={16} />
+          Call
+        </Button>
+      </div>
+
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-6 scroll-smooth">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center p-8 text-muted-foreground animate-fade-in">
@@ -57,6 +102,9 @@ export function ChatInterface({ coworker, messages, onSendMessage, isTyping, ass
              </div>
              <p className="font-medium text-slate-900">Start a conversation with {coworker.name}</p>
              <p className="text-sm text-slate-500 mt-1 max-w-xs">{coworker.personaStyle}</p>
+             <p className="text-xs text-slate-400 mt-4">
+              Or <button onClick={() => setIsInCall(true)} className="text-primary hover:underline">call them</button> for a quick chat
+            </p>
           </div>
         )}
         
