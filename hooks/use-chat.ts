@@ -1,12 +1,33 @@
-import { useState } from 'react';
-import { Message, Coworker, Scenario } from '../types/index';
+import { useState, useCallback } from 'react';
+import { Message, Coworker, Scenario, AssessmentState } from '../types/index';
 import { generateCoworkerResponse } from '../lib/ai/gemini';
+import { generatePRAcknowledgment } from '../lib/ai/pr-acknowledgment';
 
 export function useChat(coworkers: Coworker[], scenario: Scenario) {
   const [chats, setChats] = useState<Record<string, Message[]>>({});
   const [typing, setTyping] = useState<Record<string, boolean>>({});
 
-  const sendMessage = async (coworkerId: string, text: string) => {
+  // Check if text contains a valid PR URL
+  const extractPRUrl = useCallback((text: string): string | null => {
+    const patterns = [
+      /https?:\/\/github\.com\/[\w-]+\/[\w-]+\/pull\/\d+/,
+      /https?:\/\/gitlab\.com\/[\w-]+\/[\w-]+\/-\/merge_requests\/\d+/,
+      /https?:\/\/bitbucket\.org\/[\w-]+\/[\w-]+\/pull-requests\/\d+/,
+    ];
+
+    for (const pattern of patterns) {
+      const match = text.match(pattern);
+      if (match) return match[0];
+    }
+    return null;
+  }, []);
+
+  const sendMessage = useCallback(async (
+    coworkerId: string,
+    text: string,
+    assessmentState?: AssessmentState,
+    onPRDetected?: (url: string) => void
+  ) => {
     if (!text.trim()) return;
     const coworker = coworkers.find(c => c.id === coworkerId);
     if (!coworker) return;
@@ -24,12 +45,32 @@ export function useChat(coworkers: Coworker[], scenario: Scenario) {
     setTyping(prev => ({ ...prev, [coworkerId]: true }));
 
     try {
-      const responseText = await generateCoworkerResponse(
-        coworker,
-        updatedHistory,
-        text,
-        scenario
-      );
+      const isManager = coworker.role.toLowerCase().includes('manager');
+      const prUrl = extractPRUrl(text);
+      const isNewPRSubmission = isManager && prUrl && !assessmentState?.prUrl;
+
+      let responseText: string;
+
+      if (isNewPRSubmission && prUrl) {
+        // PR submitted to manager for the first time - generate acknowledgment
+        responseText = await generatePRAcknowledgment(coworker.name, prUrl);
+
+        // Notify parent about PR detection
+        if (onPRDetected) {
+          onPRDetected(prUrl);
+        }
+      } else if (isManager && prUrl && assessmentState?.prUrl) {
+        // PR already submitted, duplicate
+        responseText = "Got it! I already have your PR saved. Ready whenever you want to hop on a call to walk me through it.";
+      } else {
+        // Regular conversation
+        responseText = await generateCoworkerResponse(
+          coworker,
+          updatedHistory,
+          text,
+          scenario
+        );
+      }
 
       const aiMessage: Message = {
         id: crypto.randomUUID(),
@@ -48,7 +89,7 @@ export function useChat(coworkers: Coworker[], scenario: Scenario) {
     } finally {
       setTyping(prev => ({ ...prev, [coworkerId]: false }));
     }
-  };
+  }, [coworkers, chats, extractPRUrl, scenario]);
 
   return { chats, setChats, typing, sendMessage };
 }

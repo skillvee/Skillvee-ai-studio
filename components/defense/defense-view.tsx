@@ -6,7 +6,13 @@ import { useVoiceConversation } from '../../hooks/use-voice-conversation';
 import { buildDefensePrompt } from '../../prompts/manager';
 import { Coworker, Scenario } from '../../types/index';
 
-export function DefenseView({ manager, scenario }: { manager: Coworker; scenario: Scenario }) {
+interface DefenseViewProps {
+  manager: Coworker;
+  scenario: Scenario;
+  prUrl?: string | null;
+}
+
+export function DefenseView({ manager, scenario, prUrl }: DefenseViewProps) {
   const systemInstruction = buildDefensePrompt({
     managerName: manager.name,
     managerRole: manager.role,
@@ -15,7 +21,7 @@ export function DefenseView({ manager, scenario }: { manager: Coworker; scenario
     taskDescription: scenario.taskDescription,
     techStack: scenario.techStack,
     repoUrl: scenario.repoUrl,
-    prUrl: `${scenario.repoUrl}/pull/42`
+    prUrl: prUrl || `${scenario.repoUrl}/pull/1`
   });
 
   const { 
@@ -43,7 +49,7 @@ export function DefenseView({ manager, scenario }: { manager: Coworker; scenario
         <div className="text-center space-y-2">
           <Badge variant="outline" className="text-green-400 border-green-400/30 bg-green-400/10 mb-2">Live Interview</Badge>
           <h2 className="text-3xl font-bold tracking-tight">Code Review</h2>
-          <p className="text-slate-400 text-sm">Reviewing PR #42 with {manager.name}</p>
+          <p className="text-slate-400 text-sm">Reviewing {prUrl ? 'your PR' : 'PR'} with {manager.name}</p>
         </div>
 
         <div className="relative">

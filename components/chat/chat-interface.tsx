@@ -10,10 +10,9 @@ interface ChatInterfaceProps {
   onSendMessage: (text: string) => void;
   isTyping?: boolean;
   assessmentState?: AssessmentState;
-  onPRSubmit?: (url: string) => void;
 }
 
-export function ChatInterface({ coworker, messages, onSendMessage, isTyping, assessmentState, onPRSubmit }: ChatInterfaceProps) {
+export function ChatInterface({ coworker, messages, onSendMessage, isTyping, assessmentState }: ChatInterfaceProps) {
   const [inputValue, setInputValue] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -26,12 +25,6 @@ export function ChatInterface({ coworker, messages, onSendMessage, isTyping, ass
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
-    
-    // Check if message looks like a PR URL
-    if (inputValue.includes('github.com') && inputValue.includes('/pull/') && onPRSubmit) {
-      onPRSubmit(inputValue);
-    }
-    
     onSendMessage(inputValue);
     setInputValue("");
   };

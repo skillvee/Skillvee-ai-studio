@@ -80,6 +80,7 @@ export default function App() {
             coworkers={coworkers}
             chats={chats}
             assessmentStatus={assessmentState.status}
+            prUrl={assessmentState.prUrl}
           />
 
           <main className="flex-1 flex flex-col min-w-0 bg-muted/30">
@@ -97,10 +98,14 @@ export default function App() {
                 <ChatInterface
                   coworker={coworkers.find(c => c.id === activeCoworkerId)!}
                   messages={chats[activeCoworkerId] || []}
-                  onSendMessage={(text) => sendMessage(activeCoworkerId, text)}
+                  onSendMessage={(text) => sendMessage(
+                    activeCoworkerId, 
+                    text,
+                    assessmentState,
+                    (prUrl) => submitPR(prUrl)
+                  )}
                   isTyping={typing[activeCoworkerId]}
                   assessmentState={assessmentState}
-                  onPRSubmit={submitPR}
                 />
               )}
 
@@ -108,6 +113,7 @@ export default function App() {
                 <DefenseView
                   manager={manager}
                   scenario={scenario}
+                  prUrl={assessmentState.prUrl}
                 />
               )}
             </div>

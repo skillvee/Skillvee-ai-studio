@@ -14,9 +14,10 @@ interface SidebarProps {
   coworkers: Coworker[];
   chats?: Record<string, Message[]>;
   assessmentStatus?: AssessmentStatus;
+  prUrl?: string | null;
 }
 
-export function Sidebar({ isOpen, onClose, view, onNavigate, activeCoworkerId, onSelectCoworker, coworkers, chats, assessmentStatus }: SidebarProps) {
+export function Sidebar({ isOpen, onClose, view, onNavigate, activeCoworkerId, onSelectCoworker, coworkers, chats, assessmentStatus, prUrl }: SidebarProps) {
   return (
     <>
       <aside 
@@ -106,7 +107,7 @@ export function Sidebar({ isOpen, onClose, view, onNavigate, activeCoworkerId, o
               </div>
               <Button
                 variant={view === 'defense' ? 'default' : 'outline'}
-                disabled={assessmentStatus !== 'WORKING' && assessmentStatus !== 'COMPLETED'}
+                disabled={!prUrl}
                 className={cn(
                   "w-full justify-start gap-2 border-slate-700 hover:bg-slate-800 hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed",
                   view === 'defense' && "bg-primary hover:bg-primary/90 text-white border-transparent shadow-[0_0_15px_-3px_rgba(35,124,241,0.4)]"
@@ -118,7 +119,7 @@ export function Sidebar({ isOpen, onClose, view, onNavigate, activeCoworkerId, o
                 }}
               >
                 <Phone size={16} />
-                Start Defense
+                {prUrl ? 'Start Defense Call' : 'Submit PR First'}
               </Button>
             </div>
           </div>
