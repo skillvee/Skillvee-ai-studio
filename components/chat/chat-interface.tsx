@@ -15,6 +15,7 @@ interface ChatInterfaceProps {
   onDefenseCallStarted?: () => void;
   shouldStartCall?: boolean;
   onCallStartHandled?: () => void;
+  onAssessmentComplete?: () => void;
 }
 
 export function ChatInterface({ 
@@ -26,7 +27,8 @@ export function ChatInterface({
   scenario,
   onDefenseCallStarted,
   shouldStartCall,
-  onCallStartHandled
+  onCallStartHandled,
+  onAssessmentComplete
 }: ChatInterfaceProps) {
   const [inputValue, setInputValue] = useState("");
   const [isInCall, setIsInCall] = useState(false);
@@ -81,6 +83,14 @@ export function ChatInterface({
     setIsInCall(true);
   };
 
+  const handleCallEnded = () => {
+    setIsInCall(false);
+    // If this was the defense call (PR submitted), ending it completes the assessment
+    if (assessmentState?.prUrl && onAssessmentComplete) {
+      onAssessmentComplete();
+    }
+  };
+
   const renderText = (text: string) => {
     const parts = text.split(/(```[\s\S]*?```)/g);
     return parts.map((part, i) => {
@@ -107,6 +117,7 @@ export function ChatInterface({
           onClose={() => setIsInCall(false)}
           prUrl={assessmentState?.prUrl} // Pass PR URL if available to trigger defense mode
           isIncoming={isIncomingCall}
+          onCallEnded={handleCallEnded}
         />
       )}
 

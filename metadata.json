@@ -3,6 +3,7 @@
   "description": "A developer assessment platform simulating a realistic day at work with AI coworkers.",
   "requestFramePermissions": [
     "camera",
-    "microphone"
+    "microphone",
+    "display-capture"
   ]
 }

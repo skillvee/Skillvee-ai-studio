@@ -7,13 +7,15 @@ interface UseAssessmentProps {
   coworkers: Coworker[];
   candidateName: string;
   onManagerMessage: (managerId: string, messages: Message[]) => void;
+  onTyping: (managerId: string, isTyping: boolean) => void;
 }
 
 export function useAssessment({
   scenario,
   coworkers,
   candidateName,
-  onManagerMessage
+  onManagerMessage,
+  onTyping
 }: UseAssessmentProps) {
   const [state, setState] = useState<AssessmentState>({
     id: crypto.randomUUID(),
@@ -38,37 +40,65 @@ export function useAssessment({
     if (!manager || state.managerMessagesStarted || greetingStartedRef.current) return;
 
     greetingStartedRef.current = true;
-
-    // Small delay to feel natural (like manager is typing)
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    const greetings = await generateManagerGreeting(manager, scenario, candidateName);
-
-    // Convert to Message objects and send with staggered timing
-    for (let i = 0; i < greetings.length; i++) {
-      // Stagger messages by 1-2 seconds each
-      if (i > 0) {
-        await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
-      }
-
-      const msg: Message = {
-        id: crypto.randomUUID(),
-        role: 'model',
-        text: greetings[i],
-        timestamp: new Date(),
-        senderName: manager.name,
-      };
-
-      // Send each message as it's "typed"
-      onManagerMessage(manager.id, [msg]);
-    }
-
+    
+    // Immediately set status to working
     setState(prev => ({
       ...prev,
       status: 'WORKING',
       managerMessagesStarted: true,
     }));
-  }, [manager, scenario, candidateName, state.managerMessagesStarted, onManagerMessage]);
+
+    // Start "typing" immediately so user sees activity right away
+    onTyping(manager.id, true);
+
+    // Fetch messages (while typing animation plays)
+    // We race the generation against a minimum delay (1.5s) to ensure the first "typing" phase feels real
+    const [greetings] = await Promise.all([
+      generateManagerGreeting(manager, scenario, candidateName),
+      new Promise(resolve => setTimeout(resolve, 1500))
+    ]);
+
+    // Send the first message
+    if (greetings.length > 0) {
+      onTyping(manager.id, false);
+      
+      const firstMsg: Message = {
+        id: crypto.randomUUID(),
+        role: 'model',
+        text: greetings[0],
+        timestamp: new Date(),
+        senderName: manager.name,
+      };
+      onManagerMessage(manager.id, [firstMsg]);
+    }
+
+    // Process remaining messages with realistic pauses
+    for (let i = 1; i < greetings.length; i++) {
+      // Small reading pause between messages (user reads previous message)
+      await new Promise(resolve => setTimeout(resolve, 600 + Math.random() * 400));
+      
+      // Start typing next message
+      onTyping(manager.id, true);
+      
+      // Typing duration based on text length (approx 30ms per char), but capped
+      const text = greetings[i];
+      const typingDuration = Math.min(3500, Math.max(1200, text.length * 30));
+      await new Promise(resolve => setTimeout(resolve, typingDuration));
+      
+      // Send message
+      onTyping(manager.id, false);
+      
+      const msg: Message = {
+        id: crypto.randomUUID(),
+        role: 'model',
+        text: text,
+        timestamp: new Date(),
+        senderName: manager.name,
+      };
+      onManagerMessage(manager.id, [msg]);
+    }
+
+  }, [manager, scenario, candidateName, state.managerMessagesStarted, onManagerMessage, onTyping]);
 
   // Submit PR URL
   const submitPR = useCallback((url: string) => {

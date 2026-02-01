@@ -5,7 +5,8 @@ import { cn } from '../../lib/utils';
 import { useVoiceConversation } from '../../hooks/use-voice-conversation';
 import { buildCoworkerVoicePrompt, summarizeChatForVoice } from '../../prompts/coworker-voice';
 import { buildDefensePrompt } from '../../prompts/manager';
-import { Coworker, Scenario, Message } from '../../types/index';
+import { Coworker, Scenario, Message, AssessmentState } from '../../types/index';
+import { useAssessment } from '../../hooks/use-assessment';
 
 interface VoiceCallOverlayProps {
   coworker: Coworker;
@@ -14,9 +15,10 @@ interface VoiceCallOverlayProps {
   onClose: () => void;
   prUrl?: string | null;
   isIncoming?: boolean;
+  onCallEnded?: () => void;
 }
 
-export function VoiceCallOverlay({ coworker, scenario, messages, onClose, prUrl, isIncoming = false }: VoiceCallOverlayProps) {
+export function VoiceCallOverlay({ coworker, scenario, messages, onClose, prUrl, isIncoming = false, onCallEnded }: VoiceCallOverlayProps) {
   const [callStatus, setCallStatus] = useState<'incoming' | 'connected'>(isIncoming ? 'incoming' : 'connected');
   
   // Decide which prompt to use: Defense/Review or Standard Coworker Chat
@@ -52,6 +54,7 @@ export function VoiceCallOverlay({ coworker, scenario, messages, onClose, prUrl,
   const handleEndCall = () => {
     endCall();
     onClose();
+    if (onCallEnded) onCallEnded();
   };
 
   const handleAnswer = () => {

@@ -95,5 +95,5 @@ export function useChat(coworkers: Coworker[], scenario: Scenario) {
     }
   }, [coworkers, chats, extractPRUrl, scenario]);
 
-  return { chats, setChats, typing, sendMessage };
+  return { chats, setChats, typing, setTyping, sendMessage };
 }
